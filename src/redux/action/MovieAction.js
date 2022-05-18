@@ -1,22 +1,47 @@
-import api from "../api"
+import api from "../api";
+import { useDispatch } from "react-redux";
 
-function getMovies(){
-    return async(dispatch) => {
-        const popularMovieApi = await api.get(`movie/popular?api_key=<<api_key>>&language=en-US&page=1`)
-        // let url = `https://api.themoviedb.org/3/movie/popular?api_key=<<api_key>>&language=en-US&page=1`
-        // let response = await fetch(url)
-        // let data = await response.json()
+const API_KEY = process.env.REACT_APP_API_KEY;
+function getMovies() {
+    return async (dispatch) => {
+        try {
+            dispatch({ type: "GET_MOVIES_REQUEST" });
+            const popularMovieApi = api.get(
+                `/movie/popular?api_key=${API_KEY}&language=en-US&page=1`
+            );
+            const topRatedMovieApi = api.get(
+                `/movie/top_rated?api_key=${API_KEY}&language=en-US&page=1`
+            );
+            const upComingApi = api.get(
+                `/movie/upcoming?api_key=${API_KEY}&language=en-US&page=1`
+            );
+            const genreApi = api.get(
+                `/genre/movie/list?api_key=${API_KEY}&language=en-US`
+            );
 
-        // let url2 = `https://api.themoviedb.org/3/movie/top_rated?api_key=<<api_key>>&language=en-US&page=1`
-        // let response2 = await fetch(url2)
-        // let data2 = await response2.json()
+            let [popularMovies, topRatedMovies, upComingMovies, genreList] =
+                await Promise.all([
+                    popularMovieApi,
+                    topRatedMovieApi,
+                    upComingApi,
+                    genreApi,
+                ]);
 
-        // let url3 = `https://api.themoviedb.org/3/movie/upcoming?api_key=<<api_key>>&language=en-US&page=1`
-        // let response3 = await fetch(url3)
-        // let data3 = await response3.json()
-    }
+            dispatch({
+                type: "GET_MOVIES_SUCCESS",
+                payload: {
+                    popularMovies: popularMovies.data,
+                    topRatedMovies: topRatedMovies.data,
+                    upComingMovies: upComingMovies.data,
+                    genreList: genreList.data.genres,
+                },
+            });
+        } catch (error) {
+            dispatch({ type: "GET_MOVIES_FAILURE" });
+        }
+    };
 }
 
-export const MovieAction = {
+export const movieAction = {
     getMovies,
-}
+};
